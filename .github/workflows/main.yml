@@ -12,39 +12,45 @@ permissions:
   id-token: write
 
 jobs:
-  job-unico:
+  teste:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout do código
-        uses: actions/checkout@v4
-
-      - name: Configurar Node.js 20
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
+      - run: npm ci
+      - run: npm test
 
-      - name: Instalar dependências
-        run: npm ci
-
-      - name: Executar testes (Fim da Etapa 1)
-        run: npm test
-
-      
+  build:
+    needs: teste
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
       - name: Configurar Variáveis de Ambiente
         run: echo "EXPO_PUBLIC_TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" > .env
-
       - name: Build do Projeto
         run: npx expo export --platform web
-
       - name: Bypass do Jekyll
         run: touch dist/.nojekyll
-
       - name: Upload do Artefato
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy para GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
