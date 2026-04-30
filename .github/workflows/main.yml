@@ -88,6 +88,7 @@ jobs:
     needs:
       - deploy
       - android
+    if: github.ref == 'refs/heads/release'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -106,4 +107,5 @@ jobs:
         run: |
           gh release create "$RELEASE_TAG" apk/app-release.apk \
             --title "$RELEASE_TAG" \
+            --target "$GITHUB_SHA" \
             --notes "Release gerada pelo pipeline."
